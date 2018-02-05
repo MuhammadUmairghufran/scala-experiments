@@ -1,4 +1,4 @@
-//@annotation.tailrec
+@annotation.tailrec
 def balanceStack(list: List[Char], stack: List[Char]): List[Char] = {
   if (list.isEmpty && stack.nonEmpty) {
     return stack
@@ -6,13 +6,12 @@ def balanceStack(list: List[Char], stack: List[Char]): List[Char] = {
   if (list.isEmpty || (list.head == ')' && stack.isEmpty)) {
     return list
   }
-  if (list.head == '(') {
-    return balanceStack(list.tail, '(' +: stack)
-  }
-  if (list.head == ')' && stack.nonEmpty) {
-    return balanceStack(list.tail, stack.tail)
-  }
-  balanceStack(list.tail, stack)
+  val newStack =
+    if (list.head == '(') '(' +: stack
+    else if (list.head == ')' && stack.nonEmpty) stack.tail
+    else stack
+
+  balanceStack(list.tail, newStack)
 }
 
 def balance(sentence: String): Boolean = {
