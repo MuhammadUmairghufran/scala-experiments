@@ -8,6 +8,8 @@
 //}
 
 def balanceIterate(list: List[Char]): List[Char] = {
+  if (list.isEmpty)
+    return list
   if (list.head != '(' && list.head != ')')
     return balanceIterate(list.tail)
   if (list.last != '(' && list.last != ')')
@@ -16,16 +18,20 @@ def balanceIterate(list: List[Char]): List[Char] = {
     return balanceIterate(list.tail.dropRight(1))
   list
 }
-//
-//
+
 def balance(sentence: String): Boolean = {
   val list: List[Char] = sentence.toList
 
-  print(balanceIterate(list))
-  true
+  val finalList = balanceIterate(list)
+
+  if (finalList.nonEmpty)
+    print(finalList)
+
+  finalList.isEmpty
 }
 
 balance("a(щось тут ( та й тут ) є)")
+balance("a(щось тут ( та й тут ) (капець) є)")
 
 
 
