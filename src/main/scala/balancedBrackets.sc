@@ -39,5 +39,6 @@ balanceBrackets("a(щось ((aaa))) тут ( та й тут ) (капець) 
 balanceBrackets("a(щось ((aaa))) тут ( та й тут )) (капець) є)")
 balanceBrackets(":-)")
 balanceBrackets("())(")
+balanceBrackets("sd() (())))9(() )(()( 0(0()()()) ) ()(0) 90( )90 (0() 0( ))() )()FR))E()C0d0(C)d0v0d()v )()()c0()d( f ) fsdf")
 
 
