@@ -19,16 +19,3 @@ def pascalIter(countdown: Int, row: List[Int]): List[Int] = {
 
 pascalIter(8, List(1))
 
-
-
-// def pascal(c, r):
-//     def pascal_iter(countdown, row=[1]):
-//         new_row = [1]
-//         for i in range(len(row) - 1):
-//             new_row.append(row[i] + row[i+1])
-//         new_row.append(1)
-//         print(countdown, new_row)
-//         return pascal_iter(countdown - 1, new_row) if countdown > 1 else new_row
-
-//     row = pascal_iter(r)
-//     return row[c]
