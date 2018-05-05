@@ -34,6 +34,22 @@ object MonteCarloPiEstimation {
     getPi(pi1 + pi2, totalNumberOfPoints)
   }
 
+
+  private val recursionThreshold = 1000000 / 8
+
+  private def runParallelRecursion(totalNumberOfPoints: Int): Int = {
+    if (totalNumberOfPoints <= recursionThreshold)
+      countPointsInsideCircle(totalNumberOfPoints)
+    else {
+      val (pi1, pi2) = parallel(runParallelRecursion(totalNumberOfPoints / 2), runParallelRecursion(totalNumberOfPoints / 2))
+      pi1 + pi2
+    }
+  }
+
+  def piParallelRecursion(totalNumberOfPoints: Int): Double = {
+    getPi(runParallelRecursion(totalNumberOfPoints), totalNumberOfPoints)
+  }
+
   def piParallelParList(totalNumberOfPoints: Int): Double = {
     val count = Runtime.getRuntime.availableProcessors() - 1
 
@@ -79,16 +95,23 @@ object MonteCarloPiEstimation {
       piParallelTaskList(totalNumberOfPoints)
     )
 
+    val parRCtime = standardConfig.measure(
+      piParallelRecursion(totalNumberOfPoints)
+    )
+
     println(s"pi sequential:    ${piSeq(totalNumberOfPoints)}")
     println(s"pi parallel s:    ${piParallelSimple(totalNumberOfPoints)}")
     println(s"pi parallel pl:   ${piParallelParList(totalNumberOfPoints)}")
     println(s"pi parallel tl:   ${piParallelTaskList(totalNumberOfPoints)}")
+    println(s"pi parallel rc:   ${piParallelRecursion(totalNumberOfPoints)}")
     println(s"sequential time:  $seqtime")
     println(s"parallel s time:  $parStime")
     println(s"parallel pl time: $parPLtime")
     println(s"parallel tl time: $parTLtime")
+    println(s"parallel rc time: $parRCtime")
     println(s"speedup s:  ${seqtime.value / parStime.value}")
     println(s"speedup pl: ${seqtime.value / parPLtime.value}")
     println(s"speedup tl: ${seqtime.value / parTLtime.value}")
+    println(s"speedup rc: ${seqtime.value / parRCtime.value}")
   }
 }
