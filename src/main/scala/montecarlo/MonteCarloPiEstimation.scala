@@ -33,7 +33,7 @@ object MonteCarloPiEstimation {
   }
 
   def piParallelX(totalNumberOfPoints: Int): Double = {
-    val count = Runtime.getRuntime.availableProcessors()
+    val count = Runtime.getRuntime.availableProcessors() - 1
 
     def parallelTask = () => countPointsInsideCircle(totalNumberOfPoints / count)
 
@@ -47,7 +47,7 @@ object MonteCarloPiEstimation {
     val standardConfig = config(
       Key.exec.minWarmupRuns -> 50,
       Key.exec.maxWarmupRuns -> 300,
-      Key.exec.benchRuns -> 100,
+      Key.exec.benchRuns -> 200,
       Key.verbose -> true
     ).withWarmer(new Warmer.Default)
 
