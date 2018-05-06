@@ -1,7 +1,7 @@
 package montecarlo
 
 import org.scalameter._
-
+import parallel._
 import scala.util.Random
 
 object MonteCarloIntegration {
@@ -47,10 +47,14 @@ object MonteCarloIntegration {
     getIntegral(area, points, totalNumberOfPoints)
   }
 
-  //  def integralParallelSimple(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
-  //    val (pi1, pi2) = parallel(countPointsInsideCircle(totalNumberOfPoints / 2), countPointsInsideCircle(totalNumberOfPoints / 2))
-  //    getPi(pi1 + pi2, totalNumberOfPoints)
-  //  }
+  def integralParallelSimple(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
+    val (yMin, yMax, area) = getBounds(f, xMin = xMin, xMax = xMax)
+    val (p1, p2) = parallel(
+      countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints / 2),
+      countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints / 2)
+    )
+    getIntegral(area, p1 + p2, totalNumberOfPoints)
+  }
 
   def main(args: Array[String]): Unit = {
     val totalNumberOfPoints = 1000000
@@ -73,14 +77,22 @@ object MonteCarloIntegration {
       Key.verbose -> true
     ).withWarmer(new Warmer.Default)
 
-    val seqtime = standardConfig.measure(
+    val seqTime = standardConfig.measure(
       integralSeq(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
 
-    println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:  ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
+    val parSTime = standardConfig.measure(
+      integralParallelSimple(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
+    )
+
     println(s"Integrate[1, 2]  (3x^2) sequential:       ${integralSeq(f1, xMin = 1, xMax = 2, testPoints)}")
     println(s"Integrate[1, 2]  (x^2) sequential:        ${integralSeq(f2, xMin = 1, xMax = 2, testPoints)}")
     println(s"Integrate[1, 2]  (x*sin(x^2)) sequential: ${integralSeq(f3, xMin = -1, xMax = 2, testPoints)}")
-    println(s"sequential time:  $seqtime")
+    println("***")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:  ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel S:  ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"sequential time:  $seqTime")
+    println(s"parallel S time:  $parSTime")
+    println(s"speedup s:  ${seqTime.value / parSTime.value}")
   }
 }
