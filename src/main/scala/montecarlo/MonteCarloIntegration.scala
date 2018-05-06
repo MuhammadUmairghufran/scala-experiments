@@ -56,6 +56,23 @@ object MonteCarloIntegration {
     getIntegral(area, p1 + p2, totalNumberOfPoints)
   }
 
+  def integralParallelRecursion(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
+    val (yMin, yMax, area) = getBounds(f, xMin = xMin, xMax = xMax)
+    val recursionThreshold = 1000000 / 8
+
+    def runParallelRecursion(totalNumberOfPoints: Int): Int = {
+      if (totalNumberOfPoints <= recursionThreshold)
+        countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints / 2)
+      else {
+        val (pi1, pi2) = parallel(runParallelRecursion(totalNumberOfPoints / 2), runParallelRecursion(totalNumberOfPoints / 2))
+        pi1 + pi2
+      }
+    }
+
+    val points = runParallelRecursion(totalNumberOfPoints)
+    getIntegral(area, points, totalNumberOfPoints)
+  }
+
   def main(args: Array[String]): Unit = {
     val totalNumberOfPoints = 1000000
     val testPoints = 10000000
@@ -81,18 +98,25 @@ object MonteCarloIntegration {
       integralSeq(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
 
-    val parSTime = standardConfig.measure(
+    val parSimpleTime = standardConfig.measure(
       integralParallelSimple(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
+    )
+
+    val parRecursionTime = standardConfig.measure(
+      integralParallelRecursion(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
 
     println(s"Integrate[1, 2]  (3x^2) sequential:       ${integralSeq(f1, xMin = 1, xMax = 2, testPoints)}")
     println(s"Integrate[1, 2]  (x^2) sequential:        ${integralSeq(f2, xMin = 1, xMax = 2, testPoints)}")
     println(s"Integrate[1, 2]  (x*sin(x^2)) sequential: ${integralSeq(f3, xMin = -1, xMax = 2, testPoints)}")
     println("***")
-    println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:  ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
-    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel S:  ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
-    println(s"sequential time:  $seqTime")
-    println(s"parallel S time:  $parSTime")
-    println(s"speedup s:  ${seqTime.value / parSTime.value}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:   ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Sim: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Rec: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"sequential time:         $seqTime")
+    println(s"parallel simple time:    $parSimpleTime")
+    println(s"parallel recursion time: $parRecursionTime")
+    println(s"speedup simple:     ${seqTime.value / parSimpleTime.value}")
+    println(s"speedup recursion:  ${seqTime.value / parRecursionTime.value}")
   }
 }
