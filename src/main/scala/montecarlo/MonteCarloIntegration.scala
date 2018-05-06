@@ -14,6 +14,11 @@ object MonteCarloIntegration {
     val rndX = new Random()
     val rndY = new Random()
 
+    def getPoint(y: Double, fx: Double) =
+      if (y > 0 && fx > 0 && y <= fx) 1
+      else if (y < 0 && fx < 0 && y >= fx) -1
+      else 0
+
     @annotation.tailrec
     def simulate(hits: Int, pointsGenerated: Int): Int = {
       if (pointsGenerated >= totalNumberOfPoints)
@@ -22,7 +27,7 @@ object MonteCarloIntegration {
         val x = xMin + rndX.nextDouble() * (xMax - xMin)
         val y = yMin + rndY.nextDouble() * (yMax - yMin)
 
-        simulate(hits + (if (y < f(x)) 1 else 0), pointsGenerated + 1)
+        simulate(hits + getPoint(y, f(x)), pointsGenerated + 1)
       }
     }
 
@@ -32,9 +37,9 @@ object MonteCarloIntegration {
   private def getBounds(f: Double => Double, xMin: Double, xMax: Double) = {
     if (xMin > xMax)
       throw new Exception(s"xMin $xMin is bigger than xMax $xMax")
-
-    val yMin = 0 //Math.min(f(xMin), f(xMax))
-    val yMax = Math.max(f(xMin), f(xMax))
+    val rangeStep = (xMax - xMin) / 10000
+    val yMin = Math.min(0, (xMin to xMax by rangeStep).toList.par.map(x => f(x)).min)
+    val yMax = Math.max(0, (xMin to xMax by rangeStep).toList.par.map(x => f(x)).max)
     val area = square(f, xMin = xMin, xMax = xMax, yMin = yMin, yMax = yMax)
     (yMin, yMax, area)
   }
