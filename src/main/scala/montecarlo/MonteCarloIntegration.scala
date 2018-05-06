@@ -114,10 +114,6 @@ object MonteCarloIntegration {
 
     def f3: Double => Double = x => x * Math.sin(x * x)
 
-    println(s"Integrate[1, 2]  (3x^2) sequential:       ${integralSeq(f1, xMin = 1, xMax = 2, testPoints)}")
-    println(s"Integrate[1, 2]  (x^2) sequential:        ${integralSeq(f2, xMin = 1, xMax = 2, testPoints)}")
-    println(s"Integrate[1, 2]  (x*sin(x^2)) sequential: ${integralSeq(f3, xMin = -1, xMax = 2, testPoints)}")
-    println("***")
     println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:   ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
     println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Sim: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
     println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Rec: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
@@ -126,9 +122,9 @@ object MonteCarloIntegration {
     println("*** Speed Measures ***")
 
     val standardConfig = config(
-      Key.exec.minWarmupRuns -> 5,
+      Key.exec.minWarmupRuns -> 10,
       Key.exec.maxWarmupRuns -> 30,
-      Key.exec.benchRuns -> 30,
+      Key.exec.benchRuns -> 50,
       Key.verbose -> true
     ).withWarmer(new Warmer.Default)
 
@@ -140,10 +136,6 @@ object MonteCarloIntegration {
       integralParallelSimple(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
 
-    val parRecursionTime = standardConfig.measure(
-      integralParallelRecursion(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
-    )
-
     val parListTime = standardConfig.measure(
       integralParallelList(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
@@ -152,14 +144,18 @@ object MonteCarloIntegration {
       integralParallelTaskList(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
 
+    val parRecursionTime = standardConfig.measure(
+      integralParallelRecursion(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
+    )
+
     println(s"sequential time:         $seqTime")
     println(s"parallel simple time:    $parSimpleTime")
-    println(s"parallel recursion time: $parRecursionTime")
     println(s"parallel list time:      $parListTime")
     println(s"parallel task list time: $parTaskListTime")
+    println(s"parallel recursion time: $parRecursionTime")
     println(s"speedup simple:     ${seqTime.value / parSimpleTime.value}")
-    println(s"speedup recursion:  ${seqTime.value / parRecursionTime.value}")
     println(s"speedup par list:   ${seqTime.value / parListTime.value}")
     println(s"speedup task list:  ${seqTime.value / parTaskListTime.value}")
+    println(s"speedup recursion:  ${seqTime.value / parRecursionTime.value}")
   }
 }
