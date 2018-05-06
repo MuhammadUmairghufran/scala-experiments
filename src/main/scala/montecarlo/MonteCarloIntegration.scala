@@ -1,6 +1,7 @@
 package montecarlo
 
 import org.scalameter._
+
 import scala.util.Random
 
 object MonteCarloIntegration {
@@ -28,16 +29,28 @@ object MonteCarloIntegration {
     simulate(0, 0)
   }
 
-  def integralSeq(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
-    val yMin = 0 //Math.min(f(xMin), f(xMax))
-    val yMax = Math.max(f(xMin), f(xMax))
+  private def getBounds(f: Double => Double, xMin: Double, xMax: Double) = {
     if (xMin > xMax)
       throw new Exception(s"xMin $xMin is bigger than xMax $xMax")
 
+    val yMin = 0 //Math.min(f(xMin), f(xMax))
+    val yMax = Math.max(f(xMin), f(xMax))
     val area = square(f, xMin = xMin, xMax = xMax, yMin = yMin, yMax = yMax)
-    val points = countPointsUnderCurve(f, xMin = xMin, xMax = xMax, yMin = yMin, yMax = yMax, totalNumberOfPoints)
-    area * points / totalNumberOfPoints
+    (yMin, yMax, area)
   }
+
+  private def getIntegral(area: Double, pointsInside: Int, pointsTotal: Int) = area * pointsInside / pointsTotal
+
+  def integralSeq(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
+    val (yMin, yMax, area) = getBounds(f, xMin = xMin, xMax = xMax)
+    val points = countPointsUnderCurve(f, xMin = xMin, xMax = xMax, yMin = yMin, yMax = yMax, totalNumberOfPoints)
+    getIntegral(area, points, totalNumberOfPoints)
+  }
+
+  //  def integralParallelSimple(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
+  //    val (pi1, pi2) = parallel(countPointsInsideCircle(totalNumberOfPoints / 2), countPointsInsideCircle(totalNumberOfPoints / 2))
+  //    getPi(pi1 + pi2, totalNumberOfPoints)
+  //  }
 
   def main(args: Array[String]): Unit = {
     val totalNumberOfPoints = 1000000
