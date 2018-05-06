@@ -58,11 +58,11 @@ object MonteCarloIntegration {
 
   def integralParallelRecursion(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
     val (yMin, yMax, area) = getBounds(f, xMin = xMin, xMax = xMax)
-    val recursionThreshold = 1000000 / 8
+    val recursionThreshold = 1000000 / 64
 
     def runParallelRecursion(totalNumberOfPoints: Int): Int = {
       if (totalNumberOfPoints <= recursionThreshold)
-        countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints / 2)
+        countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints)
       else {
         val (pi1, pi2) = parallel(runParallelRecursion(totalNumberOfPoints / 2), runParallelRecursion(totalNumberOfPoints / 2))
         pi1 + pi2
@@ -73,11 +73,33 @@ object MonteCarloIntegration {
     getIntegral(area, points, totalNumberOfPoints)
   }
 
+  def integralParallelList(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
+    val count = Runtime.getRuntime.availableProcessors()
+    val (yMin, yMax, area) = getBounds(f, xMin = xMin, xMax = xMax)
+
+    def parallelTask = () => countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints / count)
+
+    val results = List.fill(count)(parallelTask).par.map(x => x())
+    getIntegral(area, results.sum, totalNumberOfPoints)
+  }
+
+  def integralParallelTaskList(f: Double => Double, xMin: Double, xMax: Double, totalNumberOfPoints: Int): Double = {
+    val count = Runtime.getRuntime.availableProcessors()
+    val (yMin, yMax, area) = getBounds(f, xMin = xMin, xMax = xMax)
+
+    def parallelTask = countPointsUnderCurve(f, xMin, xMax, yMin, yMax, totalNumberOfPoints / count)
+
+    val taskList = List.fill(count - 1)(task(parallelTask))
+    val mainTask = parallelTask
+    val points = taskList.map(t => t.join()).sum + mainTask
+    getIntegral(area, points, totalNumberOfPoints)
+  }
+
   def main(args: Array[String]): Unit = {
-    val totalNumberOfPoints = 1000000
+    val totalNumberOfPoints = 10000000
     val testPoints = 10000000
-    val xMin = 0
-    val xMax = 1
+    val xMin = -1
+    val xMax = 2
 
     def f: Double => Double = x => 2 * x * x + 4 * x * x * x
 
@@ -87,10 +109,21 @@ object MonteCarloIntegration {
 
     def f3: Double => Double = x => x * Math.sin(x * x)
 
+    println(s"Integrate[1, 2]  (3x^2) sequential:       ${integralSeq(f1, xMin = 1, xMax = 2, testPoints)}")
+    println(s"Integrate[1, 2]  (x^2) sequential:        ${integralSeq(f2, xMin = 1, xMax = 2, testPoints)}")
+    println(s"Integrate[1, 2]  (x*sin(x^2)) sequential: ${integralSeq(f3, xMin = -1, xMax = 2, testPoints)}")
+    println("***")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:   ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Sim: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Rec: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel lst: ${integralParallelList(f, xMin = -1, xMax = 2, testPoints)}")
+    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel tl:  ${integralParallelTaskList(f, xMin = -1, xMax = 2, testPoints)}")
+    println("*** Speed Measures ***")
+
     val standardConfig = config(
-      Key.exec.minWarmupRuns -> 50,
-      Key.exec.maxWarmupRuns -> 200,
-      Key.exec.benchRuns -> 100,
+      Key.exec.minWarmupRuns -> 5,
+      Key.exec.maxWarmupRuns -> 30,
+      Key.exec.benchRuns -> 30,
       Key.verbose -> true
     ).withWarmer(new Warmer.Default)
 
@@ -106,17 +139,22 @@ object MonteCarloIntegration {
       integralParallelRecursion(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
     )
 
-    println(s"Integrate[1, 2]  (3x^2) sequential:       ${integralSeq(f1, xMin = 1, xMax = 2, testPoints)}")
-    println(s"Integrate[1, 2]  (x^2) sequential:        ${integralSeq(f2, xMin = 1, xMax = 2, testPoints)}")
-    println(s"Integrate[1, 2]  (x*sin(x^2)) sequential: ${integralSeq(f3, xMin = -1, xMax = 2, testPoints)}")
-    println("***")
-    println(s"Integrate[-1, 2] (2x^2+4x^3) sequential:   ${integralSeq(f, xMin = -1, xMax = 2, testPoints)}")
-    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Sim: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
-    println(s"Integrate[-1, 2] (2x^2+4x^3) parallel Rec: ${integralParallelSimple(f, xMin = -1, xMax = 2, testPoints)}")
+    val parListTime = standardConfig.measure(
+      integralParallelList(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
+    )
+
+    val parTaskListTime = standardConfig.measure(
+      integralParallelTaskList(f, xMin = xMin, xMax = xMax, totalNumberOfPoints)
+    )
+
     println(s"sequential time:         $seqTime")
     println(s"parallel simple time:    $parSimpleTime")
     println(s"parallel recursion time: $parRecursionTime")
+    println(s"parallel list time:      $parListTime")
+    println(s"parallel task list time: $parTaskListTime")
     println(s"speedup simple:     ${seqTime.value / parSimpleTime.value}")
     println(s"speedup recursion:  ${seqTime.value / parRecursionTime.value}")
+    println(s"speedup par list:   ${seqTime.value / parListTime.value}")
+    println(s"speedup task list:  ${seqTime.value / parTaskListTime.value}")
   }
 }
