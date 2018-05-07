@@ -27,7 +27,10 @@ object WordsCounter {
 
   def makeMonoid(): Monoid[(Boolean, Int, Boolean)] = new Monoid[(Boolean, Int, Boolean)] {
     def op(x: (Boolean, Int, Boolean), y: (Boolean, Int, Boolean)): (Boolean, Int, Boolean) = {
-      (false, x._2 + y._2, false)
+      val hasUnfinishedOnLeft = x._1
+      val hasUnfinishedOnRight = y._3
+      val hasUnfinishedBetween = x._3 || y._1
+      (hasUnfinishedOnLeft, x._2 + y._2 + (if (hasUnfinishedBetween) 1 else 0), hasUnfinishedOnRight)
     }
 
     def zero: (Boolean, Int, Boolean) = (false, 0, false)
@@ -37,6 +40,8 @@ object WordsCounter {
     implicit val threshold: Int = 2
     val monoid = makeMonoid()
 
-    foldMapPar[String, (Boolean, Int, Boolean)](source, 0, source.length, monoid)(lineWordsCounter)._2
+    val (onLeft, count, onRight) =
+      foldMapPar[String, (Boolean, Int, Boolean)](source, from = 0, source.length, monoid)(lineWordsCounter)
+    count + (if (onLeft) 1 else 0) + (if (onRight) 1 else 0)
   }
 }
