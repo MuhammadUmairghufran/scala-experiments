@@ -4,7 +4,7 @@ import words_counter.WordsCounter
 class WordsCounterSpec extends FunSpec {
   describe("line words counter") {
 
-    val allSeparators = Array(" . ", ".", "...", ",", "  ", "?", "!", " ", ";", ":", "\"", "\n", "\t", "\r\n", " \n")
+    val allSeparators = Array(" . ", ".", "...", ",", "  ", ")", "(", "?", "!", " ", ";", ":", "\"", "\n", "\t", "\r\n", " \n")
 
     it("should count words in the middle and add not finished marks when line wrapped without punctuation") {
       assert(WordsCounter.lineWordsCounter("hello great world") === (true, 1, true))
@@ -100,6 +100,45 @@ class WordsCounterSpec extends FunSpec {
       it("should sum together two lines with unfinished everywhere") {
         assert(monoid.op((true, 3, true), (true, 5, true)) === (true, 9, true))
       }
+    }
+  }
+
+  describe("words counter") {
+    it("should count nothing") {
+      assert(WordsCounter.wordsCounter(Vector("")) === 0)
+    }
+
+    it("should count one word") {
+      assert(WordsCounter.wordsCounter(Vector("one")) === 1)
+    }
+
+    it("should count two words") {
+      assert(WordsCounter.wordsCounter(Vector("one two")) === 2)
+    }
+
+    it("should count 3 words") {
+      assert(WordsCounter.wordsCounter(Vector("one two three")) === 3)
+    }
+
+    it("should count 2 lines") {
+      assert(WordsCounter.wordsCounter(Vector("one two three\n", "four five six")) === 6)
+    }
+
+    it("should count 2 lines that split one word") {
+      assert(WordsCounter.wordsCounter(Vector("one two thr", "ee four five")) === 5)
+    }
+
+    it("should count punctuation on sides") {
+      assert(WordsCounter.wordsCounter(Vector(" one two thr", "ee four five :)")) === 5)
+    }
+
+    it("should count more lines case") {
+      val text51 = Vector("As in previous year, the event this not strictly a race against each other,",
+        " this is race against the clock, as the cars are released at one-min",
+        "ute intervals with the larger professional class cars go",
+        "ing before the slower cars, in the Mille Miglia, however ",
+        "the smaller displacement slower cars started first.")
+      assert(WordsCounter.wordsCounter(text51) === 51)
     }
   }
 }

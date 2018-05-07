@@ -15,7 +15,7 @@ object WordsCounter {
   }
 
   def lineWordsCounter(line: String): (Boolean, Int, Boolean) = {
-    val regex = "[\\.,\\s!\\?;:\\\"]+"
+    val regex = "[\\.,\\s!\\?;:()\\\"]+"
     val artEndOfLine = "|#|"
     val splitted = (line + "|#|").split(regex)
     val fullWordsLength = splitted.length - 2
