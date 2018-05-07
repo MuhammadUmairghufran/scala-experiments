@@ -1,33 +1,37 @@
 package words_counter
 
+import scala.io.Source
 import monoid_examples.Monoid
 import monoid_examples.foldMap.{foldMapPar, foldMapSegment}
 import org.scalameter.{Key, Warmer, config}
 
 object WordsCounter {
   def main(args: Array[String]): Unit = {
-    val text51 = Vector("As in previous year, the event this not strictly a race against each other,",
-      " this is race against the clock, as the cars are released at one-min",
-      "ute intervals with the larger professional class cars go",
-      "ing before the slower cars, in the Mille Miglia, however ",
-      "the smaller displacement slower cars started first."
-    )
-    println(s"Count sequential:   ${wordsCounterSeq(text51)}")
-    println(s"Count parallel:     ${wordsCounter(text51)}")
+    val source = readFile("big.txt")
+    println(s"Count sequential:   ${wordsCounterSeq(source)}")
+    println(s"Count parallel:     ${wordsCounter(source)}")
     println("*** Speed Measures ***")
 
     val standardConfig = config(
-      Key.exec.minWarmupRuns -> 10,
-      Key.exec.maxWarmupRuns -> 30,
-      Key.exec.benchRuns -> 50,
+      Key.exec.minWarmupRuns -> 5,
+      Key.exec.maxWarmupRuns -> 10,
+      Key.exec.benchRuns -> 100,
       Key.verbose -> true
     ).withWarmer(new Warmer.Default)
-    val seqTime = standardConfig.measure(wordsCounterSeq(text51))
-    val parTime = standardConfig.measure(wordsCounter(text51))
+    val seqTime = standardConfig.measure(wordsCounterSeq(source))
+    val parTime = standardConfig.measure(wordsCounter(source))
 
     println(s"sequential time:  $seqTime")
     println(s"parallel time:    $parTime")
     println(s"speedup           ${seqTime.value / parTime.value}")
+  }
+
+  def readFile(filename: String): Vector[String] = {
+    val bufferedSource = Source.fromFile(filename)
+    val lines = (for (line <- bufferedSource.getLines) yield line).toVector
+    bufferedSource.close()
+    println(s"number of lines in $filename: ${lines.length}")
+    lines
   }
 
   def lineWordsCounter(line: String): (Boolean, Int, Boolean) = {
@@ -55,13 +59,12 @@ object WordsCounter {
   private def combine(x: (Boolean, Int, Boolean)): Int = x._2 + (if (x._1) 1 else 0) + (if (x._3) 1 else 0)
 
   def wordsCounterSeq(source: Vector[String]): Int = {
-    implicit val threshold: Int = 2
     val monoid = makeMonoid()
     combine(foldMapSegment[String, (Boolean, Int, Boolean)](source, from = 0, source.length, monoid)(lineWordsCounter))
   }
 
   def wordsCounter(source: Vector[String]): Int = {
-    implicit val threshold: Int = 2
+    implicit val threshold: Int = 1000
     val monoid = makeMonoid()
     combine(foldMapPar[String, (Boolean, Int, Boolean)](source, from = 0, source.length, monoid)(lineWordsCounter))
   }
