@@ -25,7 +25,7 @@ object StreamExamples {
     println("all less 20", bigStream.forAll(_ < 20))
     println("all eq 1", bigStream.forAll(_ == 1))
 
-    println(Stream.from(10).take(20).toList)
+    println("from take", Stream.from(10).take(20).toList)
 
     //    val fibs = {
     //      def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
@@ -35,7 +35,10 @@ object StreamExamples {
     // uncomment for real streams
     // println("fibs:", fibs.take(10).toList)
 
-    println(bigStream.map(_ == 2).toList)
-    println(bigStream.map(_ * 2).toList)
+    println("map", bigStream.map(_ == 2).toList)
+    println("map", bigStream.map(_ * 2).toList)
+
+    println("filter", bigStream.filter(x => x >= 5 && x <= 10).toList)
+    println("filter", bigStream.filter(x => x > 3 && x <= 20).toList)
   }
 }

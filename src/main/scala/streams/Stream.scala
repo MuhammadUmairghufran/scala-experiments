@@ -27,6 +27,12 @@ sealed trait Stream[+A] {
     case _ => Stream.empty
   }
 
+  def filter(f: A => Boolean): Stream[A] = this match {
+    case Cons(h, t) if f(h) => Cons(h, t.filter(f))
+    case Cons(h, t) if !f(h) => t.filter(f)
+    case _ => Stream.empty
+  }
+
   def existsSimple(p: A => Boolean): Boolean = this match {
     case Cons(h, t) => p(h) || t.existsSimple(p)
     case _ => false
