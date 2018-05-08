@@ -24,5 +24,7 @@ object StreamExamples {
     println("all less 4", bigStream.forAll(_ < 4))
     println("all less 20", bigStream.forAll(_ < 20))
     println("all eq 1", bigStream.forAll(_ == 1))
+
+    println(Stream.from(10).take(20).toList)
   }
 }

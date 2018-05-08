@@ -65,4 +65,8 @@ object Stream {
   def apply[A](args: A*): Stream[A] =
     if (args.isEmpty) empty
     else cons(args.head, apply(args.tail: _*))
+
+  // temp to 100 because of call by value
+  def from(n: Int): Stream[Int] = if (n < 100) cons(n, from(n+1)) else empty
+  //def from(n: Int): Stream[Int] = cons(n, from(n+1))
 }
