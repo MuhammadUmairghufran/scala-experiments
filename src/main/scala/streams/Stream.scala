@@ -80,5 +80,7 @@ object Stream {
   // temp to 100 because of call by value
   def from(n: Int): Stream[Int] = if (n < 100) cons(n, from(n + 1)) else empty
 
+  def from(from: Int, to: Int): Stream[Int] = Stream.from(from).take(to - from)
+
   //def from(n: Int): Stream[Int] = cons(n, from(n+1))
 }
