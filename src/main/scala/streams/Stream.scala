@@ -7,7 +7,6 @@ sealed trait Stream[+A] {
   }
 
   def take(n: Int): Stream[A] = {
-    println("n", this)
     this match {
       case Cons(h, t) if n > 1 => Stream.cons(h, t.take(n - 1))
       case Cons(h, _) if n == 1 => Stream.cons(h, Stream.empty)
@@ -16,12 +15,16 @@ sealed trait Stream[+A] {
   }
 
   def drop(n: Int): Stream[A] = {
-    println("n", this)
     this match {
       case Cons(h, t) if n >= 1 => t.drop(n - 1)
       case Cons(h, _) if n == 0 => this
       case _ => Stream.empty
     }
+  }
+
+  def exists(p: A => Boolean): Boolean = this match {
+    case Cons(h, t) => p(h) || t.exists(p)
+    case _ => false
   }
 
   def toList: List[A] = {
