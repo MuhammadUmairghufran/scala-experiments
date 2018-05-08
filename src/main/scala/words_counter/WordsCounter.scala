@@ -5,6 +5,8 @@ import monoid_examples.Monoid
 import monoid_examples.foldMap.{foldMapPar, foldMapSegment}
 import org.scalameter.{Key, Warmer, config}
 
+case class LineCounter(leftUnfinished: Boolean, count: Int, rightUnfinished: Boolean)
+
 object WordsCounter {
   def main(args: Array[String]): Unit = {
     val source = readFile("big.txt")
@@ -34,7 +36,7 @@ object WordsCounter {
     lines
   }
 
-  def lineWordsCounter(line: String): (Boolean, Int, Boolean) = {
+  def lineWordsCounter(line: String): LineCounter = {
     val regex = "[\\.,\\s!\\?;:()\\\"]+"
     val artEndOfLine = "|#|"
     val splitted = (line + "|#|").split(regex)
@@ -42,30 +44,28 @@ object WordsCounter {
     val leftPunctuation = splitted.head == ""
     val rightPunctuation = splitted.last == artEndOfLine
 
-    (!leftPunctuation, fullWordsLength, !rightPunctuation)
+    LineCounter(!leftPunctuation, fullWordsLength, !rightPunctuation)
   }
 
-  def makeMonoid(): Monoid[(Boolean, Int, Boolean)] = new Monoid[(Boolean, Int, Boolean)] {
-    def op(x: (Boolean, Int, Boolean), y: (Boolean, Int, Boolean)): (Boolean, Int, Boolean) = {
-      val hasUnfinishedOnLeft = x._1
-      val hasUnfinishedOnRight = y._3
-      val hasUnfinishedBetween = x._3 || y._1
-      (hasUnfinishedOnLeft, x._2 + y._2 + (if (hasUnfinishedBetween) 1 else 0), hasUnfinishedOnRight)
+  def makeMonoid(): Monoid[LineCounter] = new Monoid[LineCounter] {
+    def op(x: LineCounter, y: LineCounter): LineCounter = {
+      val hasUnfinishedBetween = x.rightUnfinished || y.leftUnfinished
+      LineCounter(x.leftUnfinished, x.count + y.count + (if (hasUnfinishedBetween) 1 else 0), y.rightUnfinished)
     }
 
-    def zero: (Boolean, Int, Boolean) = (false, 0, false)
+    def zero: LineCounter = LineCounter(leftUnfinished = false, 0, rightUnfinished = false)
   }
 
-  private def combine(x: (Boolean, Int, Boolean)): Int = x._2 + (if (x._1) 1 else 0) + (if (x._3) 1 else 0)
+  private def combine(x: LineCounter): Int = x.count + (if (x.leftUnfinished) 1 else 0) + (if (x.rightUnfinished) 1 else 0)
 
   def wordsCounterSeq(source: Vector[String]): Int = {
     val monoid = makeMonoid()
-    combine(foldMapSegment[String, (Boolean, Int, Boolean)](source, from = 0, source.length, monoid)(lineWordsCounter))
+    combine(foldMapSegment[String, LineCounter](source, from = 0, source.length, monoid)(lineWordsCounter))
   }
 
   def wordsCounter(source: Vector[String]): Int = {
     implicit val threshold: Int = 1000
     val monoid = makeMonoid()
-    combine(foldMapPar[String, (Boolean, Int, Boolean)](source, from = 0, source.length, monoid)(lineWordsCounter))
+    combine(foldMapPar[String, LineCounter](source, from = 0, source.length, monoid)(lineWordsCounter))
   }
 }
