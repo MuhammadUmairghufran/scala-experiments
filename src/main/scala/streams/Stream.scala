@@ -32,8 +32,11 @@ sealed trait Stream[+A] {
     case _ => acc
   }
 
-  def exists(func: A=>Boolean): Boolean =
+  def exists(func: A => Boolean): Boolean =
     foldRight(false)((element, acc) => func(element) || acc)
+
+  def forAll(func: A => Boolean): Boolean =
+    foldRight(acc = true)((element, acc) => func(element) && acc)
 
   def toList: List[A] = {
     @annotation.tailrec

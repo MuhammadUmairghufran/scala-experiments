@@ -18,5 +18,11 @@ object StreamExamples {
 
     val fr = bigStream.foldRight(0)((elem, acc) => elem + acc)
     println("fr cum sum", fr)
+
+
+    println("all more than 15", bigStream.forAll(_ > 15))
+    println("all less 4", bigStream.forAll(_ < 4))
+    println("all less 20", bigStream.forAll(_ < 20))
+    println("all eq 1", bigStream.forAll(_ == 1))
   }
 }
