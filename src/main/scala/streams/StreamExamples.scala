@@ -14,5 +14,9 @@ object StreamExamples {
     println(bigStream.take(12).drop(5).toList)
     println("has 1", bigStream.take(12).drop(5).exists(_ == 1))
     println("has 7", bigStream.take(12).drop(5).exists(_ == 7))
+
+
+    val fr = bigStream.foldRight(0)((elem, acc) => elem + acc)
+    println("fr cum sum", fr)
   }
 }

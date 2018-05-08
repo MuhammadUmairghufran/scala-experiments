@@ -22,10 +22,18 @@ sealed trait Stream[+A] {
     }
   }
 
-  def exists(p: A => Boolean): Boolean = this match {
-    case Cons(h, t) => p(h) || t.exists(p)
+  def existsSimple(p: A => Boolean): Boolean = this match {
+    case Cons(h, t) => p(h) || t.existsSimple(p)
     case _ => false
   }
+
+  def foldRight[B](acc: B)(f: (A, B) => B): B = this match {
+    case Cons(h, t) => f(h, t.foldRight(acc)(f))
+    case _ => acc
+  }
+
+  def exists(func: A=>Boolean): Boolean =
+    foldRight(false)((element, acc) => func(element) || acc)
 
   def toList: List[A] = {
     @annotation.tailrec
