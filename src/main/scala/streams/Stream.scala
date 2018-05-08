@@ -22,6 +22,11 @@ sealed trait Stream[+A] {
     }
   }
 
+  def map[B](f: A => B): Stream[B] = this match {
+    case Cons(h, t) => Stream.cons(f(h), t.map(f))
+    case _ => Stream.empty
+  }
+
   def existsSimple(p: A => Boolean): Boolean = this match {
     case Cons(h, t) => p(h) || t.existsSimple(p)
     case _ => false
@@ -67,6 +72,7 @@ object Stream {
     else cons(args.head, apply(args.tail: _*))
 
   // temp to 100 because of call by value
-  def from(n: Int): Stream[Int] = if (n < 100) cons(n, from(n+1)) else empty
+  def from(n: Int): Stream[Int] = if (n < 100) cons(n, from(n + 1)) else empty
+
   //def from(n: Int): Stream[Int] = cons(n, from(n+1))
 }

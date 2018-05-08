@@ -27,13 +27,15 @@ object StreamExamples {
 
     println(Stream.from(10).take(20).toList)
 
-    val fibs = {
-      def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
-
-      next(0, 1)
-    }
+    //    val fibs = {
+    //      def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
+    //
+    //      next(0, 1)
+    //    }
     // uncomment for real streams
     // println("fibs:", fibs.take(10).toList)
 
+    println(bigStream.map(_ == 2).toList)
+    println(bigStream.map(_ * 2).toList)
   }
 }
