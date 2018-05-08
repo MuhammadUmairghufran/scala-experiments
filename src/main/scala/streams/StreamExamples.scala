@@ -6,5 +6,9 @@ object StreamExamples {
     //println(stream.toList)
     val top5 = stream.take(5)
     println(top5.toList)
+    //
+    println("lalala")
+    val drop4 = stream.drop(5)
+    println(drop4.toList)
   }
 }

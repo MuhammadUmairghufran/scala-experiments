@@ -15,6 +15,15 @@ sealed trait Stream[+A] {
     }
   }
 
+  def drop(n: Int): Stream[A] = {
+    println("n", this)
+    this match {
+      case Cons(h, t) if n >= 1 => t.drop(n - 1)
+      case Cons(h, _) if n == 0 => this
+      case _ => Stream.empty
+    }
+  }
+
   def toList: List[A] = {
     @annotation.tailrec
     def move(s: Stream[A], acc: List[A]): List[A] = s match {
