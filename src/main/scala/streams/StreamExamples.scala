@@ -27,13 +27,12 @@ object StreamExamples {
 
     println("from take", Stream.from(10).take(20).toList)
 
-    //    val fibs = {
-    //      def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
-    //
-    //      next(0, 1)
-    //    }
-    // uncomment for real streams
-    // println("fibs:", fibs.take(10).toList)
+    val fibs = {
+      def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
+
+      next(0, 1)
+    }
+    println("fibs:", fibs.take(10).toList)
 
     println("map", bigStream.map(_ == 2).toList)
     println("map", bigStream.map(_ * 2).toList)
@@ -41,20 +40,21 @@ object StreamExamples {
     println("filter", bigStream.filter(x => x >= 5 && x <= 10).toList)
     println("filter", bigStream.filter(x => x > 3 && x <= 20).toList)
 
-    def isPrimeNumber(n: Int): Boolean = {
-      !Stream.from(2, n-1).exists(n % _ == 0)
-    }
+    println(Stream.range(2, 11000).toList)
 
-    println(Stream.from(2, 11000).toList)
+    def isPrimeNumber(n: Int): Boolean = {
+      !Stream.range(2, n - 1).existsSimple(n % _ == 0)
+    }
 
     println("prime  9n: ", isPrimeNumber(9))
     println("prime 10n: ", isPrimeNumber(10))
     println("prime 11n: ", isPrimeNumber(11))
     println("prime 12n: ", isPrimeNumber(12))
-    println("prime 10,006: ", isPrimeNumber(10006))
-    println("prime 10,007: ", isPrimeNumber(10007))
-    println("prime 10,008: ", isPrimeNumber(10008))
-
-
+    println("prime 3330: ", isPrimeNumber(3330))
+    println("prime 3331: ", isPrimeNumber(3331))
+    println("prime 3332: ", isPrimeNumber(3332))
+    println("prime 5000: ", isPrimeNumber(5000))
+    println("prime 5407: ", isPrimeNumber(5407))
+    println("prime 200000: ", isPrimeNumber(200000))
   }
 }
