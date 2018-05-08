@@ -77,7 +77,7 @@ object Stream {
     if (args.isEmpty) empty
     else cons(args.head, apply(args.tail: _*))
 
-  def from(n: Int): Stream[Int] = cons(n, from(n+1))
+  def from(n: Int): Stream[Int] = cons(n, from(n + 1))
 
   def range(from: Int, to: Int): Stream[Int] = Stream.from(from).take(to - from)
 }

@@ -15,10 +15,8 @@ object StreamExamples {
     println("has 1", bigStream.take(12).drop(5).exists(_ == 1))
     println("has 7", bigStream.take(12).drop(5).exists(_ == 7))
 
-
     val fr = bigStream.foldRight(0)((elem, acc) => elem + acc)
     println("fr cum sum", fr)
-
 
     println("all more than 15", bigStream.forAll(_ > 15))
     println("all less 4", bigStream.forAll(_ < 4))
@@ -27,12 +25,7 @@ object StreamExamples {
 
     println("from take", Stream.from(10).take(20).toList)
 
-    val fibs = {
-      def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
-
-      next(0, 1)
-    }
-    println("fibs:", fibs.take(10).toList)
+    println("fibs:", fibonacci.take(10).toList)
 
     println("map", bigStream.map(_ == 2).toList)
     println("map", bigStream.map(_ * 2).toList)
@@ -41,10 +34,6 @@ object StreamExamples {
     println("filter", bigStream.filter(x => x > 3 && x <= 20).toList)
 
     println(Stream.range(2, 11000).toList)
-
-    def isPrimeNumber(n: Int): Boolean = {
-      !Stream.range(2, n - 1).existsSimple(n % _ == 0)
-    }
 
     println("prime  9n: ", isPrimeNumber(9))
     println("prime 10n: ", isPrimeNumber(10))
@@ -56,5 +45,15 @@ object StreamExamples {
     println("prime 5000: ", isPrimeNumber(5000))
     println("prime 5407: ", isPrimeNumber(5407))
     println("prime 200000: ", isPrimeNumber(200000))
+  }
+
+  def fibonacci: Stream[Int] = {
+    def next(f0: Int, f1: Int): Stream[Int] = Stream.cons(f0, next(f1, f0 + f1))
+
+    next(0, 1)
+  }
+
+  def isPrimeNumber(n: Int): Boolean = {
+    !Stream.range(2, n - 1).existsSimple(n % _ == 0)
   }
 }
