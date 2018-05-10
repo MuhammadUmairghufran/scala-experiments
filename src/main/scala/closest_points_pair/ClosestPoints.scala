@@ -35,6 +35,18 @@ object ClosestPoints {
     minPair
   }
 
+//  def divideAndConquerClosest(points: Vector[Point]): PointsPair = {
+//    val sorted = sortByY(points)
+//    val length = sorted.length
+//    //di
+//  }
+
+  def divideAndConquer(points: Vector[Point]) = {
+
+  }
+
+  def sortByY(points: Vector[Point]): Vector[Point] = points.sortBy(point => point.y)
+
   def distance(point1: Point, point2: Point): Double = {
     math.sqrt(scala.math.pow(point1.x - point2.x, 2) + scala.math.pow(point1.y - point2.y, 2))
   }

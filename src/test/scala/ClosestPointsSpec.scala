@@ -1,4 +1,4 @@
-import closest_points_pair.ClosestPoints.{distance, bruteForceClosest}
+import closest_points_pair.ClosestPoints.{distance, sortByY, bruteForceClosest}
 import closest_points_pair.{Point, PointsPair}
 import org.scalactic.TolerantNumerics
 import org.scalatest.FunSpec
@@ -13,6 +13,11 @@ class ClosestPointsSpec extends FunSpec {
 
   it("should find non zero euclidean distance") {
     assert(distance(Point(1, 7), Point(8, 6)) === 7.07107)
+  }
+
+  it("should sort") {
+    val sorted = Vector(Point(0,0), Point(9,1), Point(4,3), Point(2,3), Point(9,6), Point(8,7), Point(2, 9), Point(5,10))
+    assert(sortByY(points) === sorted)
   }
 
   describe("brute force") {
