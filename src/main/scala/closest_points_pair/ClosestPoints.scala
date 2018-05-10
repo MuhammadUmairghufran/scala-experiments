@@ -1,5 +1,7 @@
 package closest_points_pair
 
+import org.scalameter.{Key, Warmer, config}
+
 import scala.util.Random
 
 case class Point(x: Int, y: Int)
@@ -10,11 +12,25 @@ case class PointsPair(point1: Point, point2: Point) {
 
 object ClosestPoints {
   def main(args: Array[String]): Unit = {
-    val points = generate()
+    val points = generate(length = 20000)
     println("Length: ", points.length)
-    val bruteForcePair: PointsPair = bruteForceClosest(points)
-    println("Brute Force closest: ", bruteForcePair)
+    println("Brute Force closest:    ", bruteForceClosest(points).distance)
+    println("D&C sequential closest: ", divideAndConquerClosest(points))
+
+    val bncTime = getMeasureConfig(1, 1).measure(bruteForceClosest(points))
+    val dncTime = getMeasureConfig().measure(divideAndConquerClosest(points))
+
+    println(s"brute force time:  $bncTime")
+    println(s"divide&conq time:  $dncTime")
+    println(s"speedup:           ${bncTime.value / dncTime.value}")
   }
+
+  private def getMeasureConfig(minWarmupRuns: Int = 30, benchRuns: Int = 100) = config(
+    Key.exec.minWarmupRuns -> minWarmupRuns,
+    Key.exec.maxWarmupRuns -> minWarmupRuns * 3,
+    Key.exec.benchRuns -> benchRuns,
+    Key.verbose -> true)
+    .withWarmer(new Warmer.Default)
 
   def generate(length: Int = 10000, max: Int = 100000, seed: Int = 42): Vector[Point] = {
     val rnd = new Random(seed = seed)
