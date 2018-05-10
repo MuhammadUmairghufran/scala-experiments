@@ -35,14 +35,41 @@ object ClosestPoints {
     minPair
   }
 
-//  def divideAndConquerClosest(points: Vector[Point]): PointsPair = {
-//    val sorted = sortByY(points)
-//    val length = sorted.length
-//    //di
-//  }
+  def divideAndConquerClosest(points: Vector[Point]): Double = {
+    val (resultPoints, distance) = closestPair(points)
+    distance
+  }
 
-  def divideAndConquer(points: Vector[Point]) = {
+  def closestPair(points: Vector[Point]): (Vector[Point], Double) = {
+    if (points.length < 2)
+      (points, Double.MaxValue)
+    else {
+      val (left, right, splitPoint) = splitByY(points)
+      val (leftPoints, leftDistance) = closestPair(left)
+      val (rightPoints, rightDistance) = closestPair(right)
+      val pointsMerged = leftPoints ++ rightPoints
+      val dist = boundaryMerge(leftPoints ++ rightPoints, leftDistance, rightDistance, splitPoint)
+      (pointsMerged, dist)
+    }
+  }
 
+  def splitByY(points: Vector[Point]): (Vector[Point], Vector[Point], Point) = {
+    val sorted = sortByY(points)
+    val lengthMedian = sorted.length / 2
+    val splitPoint = sorted(lengthMedian)
+    val (left, right) = sorted.splitAt(lengthMedian)
+    (left, right, splitPoint)
+  }
+
+  def boundaryMerge(points: Vector[Point], leftDistance: Double, rightDistance: Double, middlePoint: Point): Double = {
+    val lrMinDistance = Math.min(leftDistance, rightDistance)
+    val xl = middlePoint.x - lrMinDistance
+    val xr = middlePoint.x + lrMinDistance
+
+    val minPoints = points.filter(p => p.x >= xl && p.x <= xr)
+    val minPDistance = if (minPoints.length < 2) Double.MaxValue else
+      (minPoints.slice(0, minPoints.length - 1), minPoints.slice(1, minPoints.length)).zipped.map((a, b) => distance(a, b)).min
+    scala.math.min(lrMinDistance, minPDistance)
   }
 
   def sortByY(points: Vector[Point]): Vector[Point] = points.sortBy(point => point.y)
