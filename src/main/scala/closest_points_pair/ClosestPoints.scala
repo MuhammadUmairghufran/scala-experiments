@@ -41,20 +41,20 @@ object ClosestPoints {
   }
 
   def closestPair(points: Vector[Point]): (Vector[Point], Double) = {
-    if (points.length < 2)
-      (points, Double.MaxValue)
+    if (points.length <= 3)
+      (points, bruteForceClosest(points).distance)
     else {
-      val (left, right, splitPoint) = splitByY(points)
+      val (left, right, splitPoint) = splitByX(points)
       val (leftPoints, leftDistance) = closestPair(left)
       val (rightPoints, rightDistance) = closestPair(right)
-      val pointsMerged = leftPoints ++ rightPoints
-      val dist = boundaryMerge(leftPoints ++ rightPoints, leftDistance, rightDistance, splitPoint)
+      val pointsMerged = sortByY(leftPoints ++ rightPoints)
+      val dist = boundaryMerge(pointsMerged, leftDistance, rightDistance, splitPoint)
       (pointsMerged, dist)
     }
   }
 
-  def splitByY(points: Vector[Point]): (Vector[Point], Vector[Point], Point) = {
-    val sorted = sortByY(points)
+  def splitByX(points: Vector[Point]): (Vector[Point], Vector[Point], Point) = {
+    val sorted = sortByX(points)
     val lengthMedian = sorted.length / 2
     val splitPoint = sorted(lengthMedian)
     val (left, right) = sorted.splitAt(lengthMedian)
@@ -67,12 +67,30 @@ object ClosestPoints {
     val xr = middlePoint.x + lrMinDistance
 
     val minPoints = points.filter(p => p.x >= xl && p.x <= xr)
-    val minPDistance = if (minPoints.length < 2) Double.MaxValue else
-      (minPoints.slice(0, minPoints.length - 1), minPoints.slice(1, minPoints.length)).zipped.map((a, b) => distance(a, b)).min
+    val minPDistance = getMinPointsDistance(minPoints)
     scala.math.min(lrMinDistance, minPDistance)
   }
 
+  def getMinPointsDistance(points: Vector[Point]): Double = {
+    if (points.length < 2)
+      Double.MaxValue
+    else {
+      var minDistance = Double.MaxValue
+      for (i <- 0 until points.length - 1) {
+        var j = i + 1
+        while (j < i + 8 && j < points.length) {
+          val stepDistance = distance(points(i), points(j))
+          minDistance = if (stepDistance < minDistance) stepDistance else minDistance
+          j += 1
+        }
+      }
+      minDistance
+    }
+  }
+
   def sortByY(points: Vector[Point]): Vector[Point] = points.sortBy(point => point.y)
+
+  def sortByX(points: Vector[Point]): Vector[Point] = points.sortBy(point => point.x)
 
   def distance(point1: Point, point2: Point): Double = {
     math.sqrt(scala.math.pow(point1.x - point2.x, 2) + scala.math.pow(point1.y - point2.y, 2))

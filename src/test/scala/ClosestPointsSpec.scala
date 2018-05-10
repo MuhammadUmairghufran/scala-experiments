@@ -20,18 +20,18 @@ class ClosestPointsSpec extends FunSpec {
     assert(sortByY(points) === sorted)
   }
 
-  it("should split by y for even length") {
-    val (left, right, splitPoint) = splitByY(points)
-    assert(left === Vector(Point(0, 0), Point(9, 1), Point(4, 3), Point(2, 3)))
-    assert(right === Vector(Point(9, 6), Point(8, 7), Point(2, 9), Point(5, 10)))
-    assert(splitPoint === Point(9, 6))
+  it("should split by x for even length") {
+    val (left, right, splitPoint) = splitByX(points)
+    assert(left === Vector(Point(0, 0), Point(2, 3), Point(2, 9), Point(4, 3)))
+    assert(right === Vector(Point(5, 10), Point(8, 7), Point(9, 6), Point(9, 1)))
+    assert(splitPoint === Point(5, 10))
   }
 
-  it("should split by y for odd length") {
-    val (left, right, splitPoint) = splitByY(points :+ Point(2, 5))
-    assert(left === Vector(Point(0, 0), Point(9, 1), Point(4, 3), Point(2, 3)))
-    assert(right === Vector(Point(2, 5), Point(9, 6), Point(8, 7), Point(2, 9), Point(5, 10)))
-    assert(splitPoint === Point(2, 5))
+  it("should split by x for odd length") {
+    val (left, right, splitPoint) = splitByX(points :+ Point(2, 5))
+    assert(left === Vector(Point(0, 0), Point(2, 3), Point(2, 9), Point(2, 5)))
+    assert(right === Vector(Point(4, 3), Point(5, 10), Point(8, 7), Point(9, 6), Point(9, 1)))
+    assert(splitPoint === Point(4, 3))
   }
 
   describe("boundary merge") {
@@ -96,12 +96,7 @@ class ClosestPointsSpec extends FunSpec {
   }
 
   describe("divide and conquer") {
-    it("should be infinity if only 1 point") {
-      val bestPointDistance = divideAndConquerClosest(Vector(Point(1, 2)))
-      assert(bestPointDistance === Double.MaxValue)
-    }
-
-    it("should be infinity for 2 points") {
+    it("should be calculate distance for small amount of points") {
       val bestPointDistance = divideAndConquerClosest(Vector(Point(1, 2), Point(2, 3), Point(8, 3), Point(5, 3)))
       assert(bestPointDistance === distance(Point(1, 2), Point(2, 3)))
     }
@@ -112,11 +107,47 @@ class ClosestPointsSpec extends FunSpec {
       assert(bestPointDistance === actual.distance)
     }
 
-    it("should calculate closest point correctly for large amount of points") {
-      val length = 4000
+    it("should find closest points for 3 points with big difference between") {
+      val somePoints = generate(length = 3, max = 3000, seed = 1)
+      val bestPointBruteForce = bruteForceClosest(somePoints)
+      val bestPointDCDistance = divideAndConquerClosest(somePoints)
+
+      assert(bestPointDCDistance === bestPointBruteForce.distance)
+    }
+
+    it("should find closest points for other tricky case") {
+      val somePoints = generate(length = 6, max = 30, seed = 2)
+      val bestPointBruteForce = bruteForceClosest(somePoints)
+      val bestPointDCDistance = divideAndConquerClosest(somePoints)
+
+      assert(bestPointDCDistance === bestPointBruteForce.distance)
+    }
+
+    it("should find closest points for one more tricky case") {
+      val somePoints = generate(length = 9, max = 9 * 5, seed = 1)
+      val bestPointBruteForce = bruteForceClosest(somePoints)
+      val bestPointDCDistance = divideAndConquerClosest(somePoints)
+
+      assert(bestPointDCDistance === bestPointBruteForce.distance)
+    }
+
+    it("should calculate closest point correctly for different amount of points") {
+      for (j <- 1 until 5) {
+        println(j, "Calculate closest point for different amount of points")
+        for (i <- 2 until 500) {
+          val largeAmountOfPoints = generate(length = i, max = i * 5 * j, seed = 1)
+
+          val bestPointBruteForce = bruteForceClosest(largeAmountOfPoints)
+          val bestPointDCDistance = divideAndConquerClosest(largeAmountOfPoints)
+
+          assert(bestPointDCDistance === bestPointBruteForce.distance)
+        }
+      }
+    }
+
+    it("should calculate closest point correctly for large density of points for different seeds") {
       for (i <- 0 until 10) {
-        val largeAmountOfPoints = generate(length = length, max = 1000000, seed = i)
-        assert(largeAmountOfPoints.length === length)
+        val largeAmountOfPoints = generate(length = 4000, max = 10000, seed = i)
 
         val bestPointBruteForce = bruteForceClosest(largeAmountOfPoints)
         val bestPointDCDistance = divideAndConquerClosest(largeAmountOfPoints)
