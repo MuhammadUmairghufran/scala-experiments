@@ -11,23 +11,32 @@ case class PointsPair(point1: Point, point2: Point) {
 }
 
 object ClosestPoints {
+  private var threshold: Int = 0
+
   def main(args: Array[String]): Unit = {
     val points = generate(length = 20000)
-    println("Length: ", points.length)
+    val cores = Runtime.getRuntime.availableProcessors()
+
     println("Brute Force closest:    ", bruteForceClosest(points).distance)
     println("D&C sequential closest: ", divideAndConquerClosest(points))
+    println("D&C parallel closest:   ", divideAndConquerClosest(points, threads = cores))
 
     val bncTime = getMeasureConfig(1, 1).measure(bruteForceClosest(points))
     val dncTime = getMeasureConfig().measure(divideAndConquerClosest(points))
+    val dnpTime = getMeasureConfig().measure(divideAndConquerClosest(points, threads = cores))
 
-    println(s"brute force time:  $bncTime")
-    println(s"divide&conq time:  $dncTime")
-    println(s"speedup:           ${bncTime.value / dncTime.value}")
+    println(s"brute force seq time:  $bncTime")
+    println(s"divide&conq seq time:  $dncTime")
+    println(s"divide&conq par time:  $dnpTime")
+    println(s"just dnc speedup:      ${bncTime.value / dncTime.value}")
+    println(s"dnc parallel speedup:  ${dncTime.value / dnpTime.value}")
   }
+
+  private def setCoresThreshold(pointsLength: Int, cores: Int): Unit = threshold = pointsLength / cores
 
   private def getMeasureConfig(minWarmupRuns: Int = 30, benchRuns: Int = 100) = config(
     Key.exec.minWarmupRuns -> minWarmupRuns,
-    Key.exec.maxWarmupRuns -> minWarmupRuns * 3,
+    Key.exec.maxWarmupRuns -> minWarmupRuns * 2,
     Key.exec.benchRuns -> benchRuns,
     Key.verbose -> true)
     .withWarmer(new Warmer.Default)
@@ -51,8 +60,9 @@ object ClosestPoints {
     minPair
   }
 
-  def divideAndConquerClosest(points: Vector[Point]): Double = {
-    val (resultPoints, distance) = closestPair(points)
+  def divideAndConquerClosest(points: Vector[Point], threads: Int = 1): Double = {
+    setCoresThreshold(points.length, threads)
+    val (_, distance) = closestPair(points)
     distance
   }
 
@@ -61,12 +71,18 @@ object ClosestPoints {
       (points, bruteForceClosest(points).distance)
     else {
       val (left, right, splitPoint) = splitByX(points)
-      val (leftPoints, leftDistance) = closestPair(left)
-      val (rightPoints, rightDistance) = closestPair(right)
+      val ((leftPoints, leftDistance), (rightPoints, rightDistance)) = parallelProcess(left, right)
       val pointsMerged = sortByY(leftPoints ++ rightPoints)
       val dist = boundaryMerge(pointsMerged, leftDistance, rightDistance, splitPoint)
       (pointsMerged, dist)
     }
+  }
+
+  private def parallelProcess(leftPoints: Vector[Point], rightPoints: Vector[Point]) = {
+    if (leftPoints.length < threshold)
+      (closestPair(leftPoints), closestPair(rightPoints))
+    else
+      parallel.parallel(closestPair(leftPoints), closestPair(rightPoints))
   }
 
   def splitByX(points: Vector[Point]): (Vector[Point], Vector[Point], Point) = {

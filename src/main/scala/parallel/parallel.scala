@@ -27,6 +27,13 @@ package object parallel {
     (left, right.join())
   }
 
+  def parallelX[A, B](taskA: => A, taskB: => B): (A, B) = {
+    val right = task(taskB)
+    val left = task(taskA)
+
+    (left.join(), right.join())
+  }
+
   def parallel[A, B, C, D](taskA: => A, taskB: => B, taskC: => C, taskD: => D): (A, B, C, D) = {
     val ta = task(taskA)
     val tb = task(taskB)
